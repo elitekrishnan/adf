@@ -1,6 +1,7 @@
 {
-	"name": "ds_Customer",
+	"name": "DS_SQL_Customer",
 	"properties": {
+		"description": "SQL Server Dataset ",
 		"linkedServiceName": {
 			"referenceName": "AzureSqlDatabaseLinkedService",
 			"type": "LinkedServiceReference"
