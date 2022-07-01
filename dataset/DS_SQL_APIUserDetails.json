@@ -1,0 +1,38 @@
+{
+	"name": "DS_SQL_APIUserDetails",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_ADFCustomer",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "API_UserDetails"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "userId",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "title",
+				"type": "nvarchar"
+			},
+			{
+				"name": "body",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "adf_UserDetails"
+		}
+	}
+}
