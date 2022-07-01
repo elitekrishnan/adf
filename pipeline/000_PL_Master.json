@@ -1,0 +1,66 @@
+{
+	"name": "000_PL_Master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Load Customer",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "001_PL_Load_Customer",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "Load New Customer",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load Customer",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "002_PL_Load_CustomerNew",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			},
+			{
+				"name": "003_PL_UserList",
+				"type": "ExecutePipeline",
+				"dependsOn": [
+					{
+						"activity": "Load New Customer",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "003_PL_UserList",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true
+				}
+			}
+		],
+		"folder": {
+			"name": "PipeLine"
+		},
+		"annotations": [],
+		"lastPublishTime": "2022-06-27T04:52:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,9 @@
+{
+	"name": "ADF-LoadCustomer",
+	"location": "eastus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "5c516241-a541-4201-94ec-28de1d7175e6",
+		"tenantId": "a4394495-2c39-4691-8c52-f3a39805c26d"
+	}
+}

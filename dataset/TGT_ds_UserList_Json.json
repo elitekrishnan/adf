@@ -1,0 +1,23 @@
+{
+	"name": "TGT_ds_UserList_Json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LinkedService_JSON",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": {
+					"value": "@concat(formatDateTime(subtractFromTime(utcNow(),1,'Month'), 'yyyy-MM'), '.json')",
+					"type": "Expression"
+				},
+				"container": "newcontainer"
+			}
+		},
+		"schema": {}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
