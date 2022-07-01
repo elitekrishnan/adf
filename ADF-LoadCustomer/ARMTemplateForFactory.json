@@ -7,21 +7,9 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADF-LoadCustomer"
 		},
-		"AzureBlobStorageLink_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorageLink'"
-		},
-		"AzureSqlDatabaseLinkedService_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabaseLinkedService'"
-		},
 		"LinkedService_JSON_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
-		},
-		"LinkedService_JSONFileSave_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSONFileSave'"
 		},
 		"LS_ABLB_ADFStorage_connectionString": {
 			"type": "secureString",
@@ -30,6 +18,10 @@
 		"LS_SQL_ADFCustomer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
+		},
+		"LS_REST_API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://jsonplaceholder.typicode.com/posts"
 		}
 	},
 	"variables": {
@@ -49,7 +41,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "001_PL_Load_Customer",
+								"referenceName": "101_PL_Load_Customer",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -70,7 +62,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "002_PL_Load_CustomerNew",
+								"referenceName": "102_PL_Load_CustomerNew",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -91,7 +83,7 @@
 						"userProperties": [],
 						"typeProperties": {
 							"pipeline": {
-								"referenceName": "003_PL_UserList",
+								"referenceName": "201_PL_UserList_From_REST_API_to_SQL_Table",
 								"type": "PipelineReference"
 							},
 							"waitOnCompletion": true,
@@ -104,19 +96,19 @@
 					"cancelAfter": {}
 				},
 				"folder": {
-					"name": "PipeLine"
+					"name": "ADF Pipeline"
 				},
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T04:52:24Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/001_PL_Load_Customer')]",
-				"[concat(variables('factoryId'), '/pipelines/002_PL_Load_CustomerNew')]",
-				"[concat(variables('factoryId'), '/pipelines/003_PL_UserList')]"
+				"[concat(variables('factoryId'), '/pipelines/101_PL_Load_Customer')]",
+				"[concat(variables('factoryId'), '/pipelines/102_PL_Load_CustomerNew')]",
+				"[concat(variables('factoryId'), '/pipelines/201_PL_UserList_From_REST_API_to_SQL_Table')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/001_PL_Load_Customer')]",
+			"name": "[concat(parameters('factoryName'), '/101_PL_Load_Customer')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -290,7 +282,7 @@
 					"cancelAfter": {}
 				},
 				"folder": {
-					"name": "PipeLine"
+					"name": "ADF Pipeline/100_PL_Customer"
 				},
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T03:22:36Z"
@@ -301,7 +293,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/002_PL_Load_CustomerNew')]",
+			"name": "[concat(parameters('factoryName'), '/102_PL_Load_CustomerNew')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -440,7 +432,7 @@
 					"cancelAfter": {}
 				},
 				"folder": {
-					"name": "PipeLine"
+					"name": "ADF Pipeline/100_PL_Customer"
 				},
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T03:22:36Z"
@@ -451,14 +443,14 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/003_PL_UserList')]",
+			"name": "[concat(parameters('factoryName'), '/201_PL_UserList_From_REST_API_to_SQL_Table')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"activities": [
 					{
-						"name": "Web Request",
-						"type": "WebActivity",
+						"name": "REST API to Blob Storage",
+						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "7.00:00:00",
@@ -469,30 +461,47 @@
 						},
 						"userProperties": [],
 						"typeProperties": {
-							"url": "https://gorest.co.in/public/v2/users",
-							"method": "GET",
-							"headers": {},
-							"linkedServices": [
-								{
-									"referenceName": "LinkedService_JSON",
-									"type": "LinkedServiceReference"
+							"source": {
+								"type": "RestSource",
+								"httpRequestTimeout": "00:01:40",
+								"requestInterval": "00.00:00:00.010",
+								"requestMethod": "GET",
+								"paginationRules": {
+									"supportRFC5988": "true"
 								}
-							],
-							"datasets": [
-								{
-									"referenceName": "SRC_ds_UserList_Json",
-									"type": "DatasetReference",
-									"parameters": {}
+							},
+							"sink": {
+								"type": "JsonSink",
+								"storeSettings": {
+									"type": "AzureBlobStorageWriteSettings"
+								},
+								"formatSettings": {
+									"type": "JsonWriteSettings"
 								}
-							]
-						}
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_REST_APIUserDetails",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_ABLB_APIUserDetails",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
 					},
 					{
-						"name": "Copy data1",
+						"name": "Blob Storage to SQL Table",
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Web Request",
+								"activity": "Delete existing data in target table",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -512,7 +521,6 @@
 								"storeSettings": {
 									"type": "AzureBlobStorageReadSettings",
 									"recursive": true,
-									"wildcardFileName": "*.json",
 									"enablePartitionDiscovery": false
 								},
 								"formatSettings": {
@@ -520,31 +528,101 @@
 								}
 							},
 							"sink": {
-								"type": "JsonSink",
-								"storeSettings": {
-									"type": "AzureBlobStorageWriteSettings",
-									"copyBehavior": "MergeFiles"
-								},
-								"formatSettings": {
-									"type": "JsonWriteSettings"
-								}
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
 							},
-							"enableStaging": false
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['userId']"
+										},
+										"sink": {
+											"name": "userId",
+											"type": "Int64"
+										}
+									},
+									{
+										"source": {
+											"path": "$['id']"
+										},
+										"sink": {
+											"name": "id",
+											"type": "Int64"
+										}
+									},
+									{
+										"source": {
+											"path": "$['title']"
+										},
+										"sink": {
+											"name": "title",
+											"type": "String"
+										}
+									},
+									{
+										"source": {
+											"path": "$['body']"
+										},
+										"sink": {
+											"name": "body",
+											"type": "String"
+										}
+									}
+								]
+							}
 						},
 						"inputs": [
 							{
-								"referenceName": "SRC_ds_UserList_Json",
+								"referenceName": "DS_ABLB_APIUserDetails",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						],
 						"outputs": [
 							{
-								"referenceName": "TGT_ds_UserList_Json",
+								"referenceName": "DS_SQL_APIUserDetails",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "Delete existing data in target table",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "REST API to Blob Storage",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "Truncate table dbo.adf_UserDetails;\nSelect 0 as Id;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_SQL_APIUserDetails",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
 					}
 				],
 				"policy": {
@@ -557,19 +635,19 @@
 					}
 				},
 				"folder": {
-					"name": "PipeLine"
+					"name": "ADF Pipeline/200_PL_API_Load"
 				},
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T07:58:34Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]",
-				"[concat(variables('factoryId'), '/datasets/SRC_ds_UserList_Json')]",
-				"[concat(variables('factoryId'), '/datasets/TGT_ds_UserList_Json')]"
+				"[concat(variables('factoryId'), '/datasets/DS_REST_APIUserDetails')]",
+				"[concat(variables('factoryId'), '/datasets/DS_ABLB_APIUserDetails')]",
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_APIUserDetails')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/004_PL_APIs')]",
+			"name": "[concat(parameters('factoryName'), '/203_PL_APIs')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -604,7 +682,7 @@
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Entries",
+								"activity": "Set variable1",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -620,15 +698,23 @@
 						"userProperties": [],
 						"typeProperties": {
 							"source": {
-								"type": "JsonSource",
+								"type": "DelimitedTextSource",
+								"additionalColumns": [
+									{
+										"name": "newColumn",
+										"value": {
+											"value": "@variables('API_Output')",
+											"type": "Expression"
+										}
+									}
+								],
 								"storeSettings": {
 									"type": "AzureBlobStorageReadSettings",
 									"recursive": true,
-									"wildcardFileName": "*.json",
 									"enablePartitionDiscovery": false
 								},
 								"formatSettings": {
-									"type": "JsonReadSettings"
+									"type": "DelimitedTextReadSettings"
 								}
 							},
 							"sink": {
@@ -641,11 +727,34 @@
 									"type": "JsonWriteSettings"
 								}
 							},
-							"enableStaging": false
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "Template_Column",
+											"type": "String"
+										},
+										"sink": {
+											"path": "$[']]"
+										}
+									},
+									{
+										"source": {
+											"name": "newColumn",
+											"type": "String"
+										},
+										"sink": {
+											"path": "$['$[\\']]']"
+										}
+									}
+								]
+							}
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_API_to_WebActivity_Json",
+								"referenceName": "DelimitedText1",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -657,44 +766,73 @@
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "Set variable1",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Entries",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "API_Output",
+							"value": {
+								"value": "@{activity('Entries').output}",
+								"type": "Expression"
+							}
+						}
 					}
 				],
 				"policy": {
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
+				"variables": {
+					"API_Output": {
+						"type": "String"
+					}
+				},
 				"folder": {
-					"name": "PipeLine"
+					"name": "ADF Pipeline/200_PL_API_Load"
 				},
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T07:58:34Z"
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/ds_API_to_WebActivity_Json')]",
+				"[concat(variables('factoryId'), '/datasets/DelimitedText1')]",
 				"[concat(variables('factoryId'), '/datasets/ds_WebActivity_to_Blog')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/SRC_ds_UserList_Json')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ds_UserList_Json')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "LinkedService_JSON",
+					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Others"
 				},
 				"annotations": [],
 				"type": "Json",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"container": "newcontainer"
+						"container": "source"
 					}
 				},
 				"schema": {}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
 			]
 		},
 		{
@@ -705,6 +843,9 @@
 				"linkedServiceName": {
 					"referenceName": "LinkedService_JSON",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Others"
 				},
 				"annotations": [],
 				"type": "Json",
@@ -734,11 +875,15 @@
 					"referenceName": "LinkedService_JSON",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "Others"
+				},
 				"annotations": [],
 				"type": "Json",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
+						"fileName": "WebActivity.json",
 						"container": "input"
 					}
 				},
@@ -757,6 +902,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Customer"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -778,6 +926,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Customer"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -826,6 +977,9 @@
 					"referenceName": "LinkedService_JSON",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "Others"
+				},
 				"annotations": [],
 				"type": "Json",
 				"typeProperties": {
@@ -853,6 +1007,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Customer"
 				},
 				"annotations": [],
 				"type": "DelimitedText",
@@ -899,33 +1056,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/AzureBlobStorageLink')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "Link for Blob storage",
-				"annotations": [],
-				"type": "AzureBlobStorage",
-				"typeProperties": {
-					"connectionString": "[parameters('AzureBlobStorageLink_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabaseLinkedService')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"connectionString": "[parameters('AzureSqlDatabaseLinkedService_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/LinkedService_JSON')]",
 			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
@@ -934,19 +1064,6 @@
 				"type": "AzureBlobStorage",
 				"typeProperties": {
 					"connectionString": "[parameters('LinkedService_JSON_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/LinkedService_JSONFileSave')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureBlobStorage",
-				"typeProperties": {
-					"connectionString": "[parameters('LinkedService_JSONFileSave_connectionString')]"
 				}
 			},
 			"dependsOn": []
@@ -961,7 +1078,7 @@
 				"pipelines": [
 					{
 						"pipelineReference": {
-							"referenceName": "001_PL_Load_Customer",
+							"referenceName": "101_PL_Load_Customer",
 							"type": "PipelineReference"
 						},
 						"parameters": {}
@@ -978,7 +1095,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/pipelines/001_PL_Load_Customer')]"
+				"[concat(variables('factoryId'), '/pipelines/101_PL_Load_Customer')]"
 			]
 		},
 		{
@@ -1007,6 +1124,146 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_REST_API')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Linked Service for Rest API",
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('LS_REST_API_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_REST_APIUserDetails')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Dataset for Rest API",
+				"linkedServiceName": {
+					"referenceName": "LS_REST_API",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "API_UserDetails"
+				},
+				"annotations": [],
+				"type": "RestResource",
+				"typeProperties": {},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_REST_API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_APIUserDetails')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "API_UserDetails"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "UserList",
+						"container": "target"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_APIUserDetails')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "API_UserDetails"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "userId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "body",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adf_UserDetails"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Templace.csv",
+						"container": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
 		}
 	]
 }

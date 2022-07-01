@@ -7,21 +7,9 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADF-LoadCustomer"
 		},
-		"AzureBlobStorageLink_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorageLink'"
-		},
-		"AzureSqlDatabaseLinkedService_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'AzureSqlDatabaseLinkedService'"
-		},
 		"LinkedService_JSON_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
-		},
-		"LinkedService_JSONFileSave_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSONFileSave'"
 		},
 		"LS_ABLB_ADFStorage_connectionString": {
 			"type": "secureString",
@@ -30,6 +18,10 @@
 		"LS_SQL_ADFCustomer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
+		},
+		"LS_REST_API_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://jsonplaceholder.typicode.com/posts"
 		},
 		"containerUri": {
 			"type": "string",
@@ -58,27 +50,41 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
-					"AzureBlobStorageLink_connectionString": {
-						"value": "[parameters('AzureBlobStorageLink_connectionString')]"
-					},
-					"AzureSqlDatabaseLinkedService_connectionString": {
-						"value": "[parameters('AzureSqlDatabaseLinkedService_connectionString')]"
-					},
 					"LinkedService_JSON_connectionString": {
 						"value": "[parameters('LinkedService_JSON_connectionString')]"
-					},
-					"LinkedService_JSONFileSave_connectionString": {
-						"value": "[parameters('LinkedService_JSONFileSave_connectionString')]"
 					},
 					"LS_ABLB_ADFStorage_connectionString": {
 						"value": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
 					},
 					"LS_SQL_ADFCustomer_connectionString": {
 						"value": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
+					},
+					"LS_REST_API_properties_typeProperties_url": {
+						"value": "[parameters('LS_REST_API_properties_typeProperties_url')]"
 					}
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "ADF-LoadCustomer_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2018-02-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'ADF-LoadCustomer_ArmTemplate_0')]"
+			]
 		}
 	]
 }
