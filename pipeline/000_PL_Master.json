@@ -9,7 +9,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "001_PL_Load_Customer",
+						"referenceName": "101_PL_Load_Customer",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -29,7 +29,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "002_PL_Load_CustomerNew",
+						"referenceName": "102_PL_Load_CustomerNew",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -49,7 +49,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "003_PL_UserList",
+						"referenceName": "201_PL_UserList",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true
@@ -57,7 +57,7 @@
 			}
 		],
 		"folder": {
-			"name": "PipeLine"
+			"name": "ADF Pipeline"
 		},
 		"annotations": [],
 		"lastPublishTime": "2022-06-27T04:52:24Z"

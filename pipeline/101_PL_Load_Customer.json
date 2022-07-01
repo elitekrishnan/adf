@@ -1,5 +1,5 @@
 {
-	"name": "001_PL_Load_Customer",
+	"name": "101_PL_Load_Customer",
 	"properties": {
 		"description": "Pipeline to Load Customer information from Blob storage ",
 		"activities": [
@@ -164,7 +164,7 @@
 			}
 		],
 		"folder": {
-			"name": "PipeLine"
+			"name": "ADF Pipeline/100_PL_Customer"
 		},
 		"annotations": [],
 		"lastPublishTime": "2022-06-27T03:22:36Z"

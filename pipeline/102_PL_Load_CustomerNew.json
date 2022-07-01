@@ -1,5 +1,5 @@
 {
-	"name": "002_PL_Load_CustomerNew",
+	"name": "102_PL_Load_CustomerNew",
 	"properties": {
 		"activities": [
 			{
@@ -130,7 +130,7 @@
 			}
 		],
 		"folder": {
-			"name": "PipeLine"
+			"name": "ADF Pipeline/100_PL_Customer"
 		},
 		"annotations": [],
 		"lastPublishTime": "2022-06-27T03:22:36Z"
