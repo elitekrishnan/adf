@@ -23,6 +23,14 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSONFileSave'"
 		},
+		"LS_ABLB_ADFStorage_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_ABLB_ADFStorage'"
+		},
+		"LS_SQL_ADFCustomer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
+		},
 		"containerUri": {
 			"type": "string",
 			"metadata": "URI to storage account containing linked ARM templates"
@@ -61,6 +69,12 @@
 					},
 					"LinkedService_JSONFileSave_connectionString": {
 						"value": "[parameters('LinkedService_JSONFileSave_connectionString')]"
+					},
+					"LS_ABLB_ADFStorage_connectionString": {
+						"value": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
+					},
+					"LS_SQL_ADFCustomer_connectionString": {
+						"value": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
 					}
 				}
 			},

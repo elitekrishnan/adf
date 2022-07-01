@@ -22,6 +22,14 @@
 		"LinkedService_JSONFileSave_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSONFileSave'"
+		},
+		"LS_ABLB_ADFStorage_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_ABLB_ADFStorage'"
+		},
+		"LS_SQL_ADFCustomer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
 		}
 	},
 	"variables": {
@@ -76,7 +84,7 @@
 							{
 								"activity": "Load New Customer",
 								"dependencyConditions": [
-									"Succeeded"
+									"Skipped"
 								]
 							}
 						],
@@ -115,9 +123,16 @@
 				"description": "Pipeline to Load Customer information from Blob storage ",
 				"activities": [
 					{
-						"name": "copyData_Customer",
+						"name": "Load Customer from CSV file",
 						"type": "Copy",
-						"dependsOn": [],
+						"dependsOn": [
+							{
+								"activity": "Truncate Traget Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
 						"policy": {
 							"timeout": "7.00:00:00",
 							"retry": 0,
@@ -230,18 +245,44 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_blob_customerCsv",
+								"referenceName": "DS_ABLB_CustomerCSV",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						],
 						"outputs": [
 							{
-								"referenceName": "ds_Customer",
+								"referenceName": "DS_SQL_Customer",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						]
+					},
+					{
+						"name": "Truncate Traget Table",
+						"type": "Lookup",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "Truncate Table dbo.adf_Customer;\nSelect 0 as Id;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_SQL_Customer",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
 					}
 				],
 				"policy": {
@@ -255,8 +296,8 @@
 				"lastPublishTime": "2022-06-27T03:22:36Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_blob_customerCsv')]",
-				"[concat(variables('factoryId'), '/datasets/ds_Customer')]"
+				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CustomerCSV')]",
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_Customer')]"
 			]
 		},
 		{
@@ -266,7 +307,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Activity_CopyData",
+						"name": "Load Customer New table from CSV file",
 						"type": "Copy",
 						"dependsOn": [],
 						"policy": {
@@ -380,14 +421,14 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "ds_blob_customerCsv",
+								"referenceName": "DS_ABLB_CustomerCSV",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						],
 						"outputs": [
 							{
-								"referenceName": "ds_CustomerNew",
+								"referenceName": "DS_SQL_CustomerNew",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
@@ -405,8 +446,8 @@
 				"lastPublishTime": "2022-06-27T03:22:36Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_blob_customerCsv')]",
-				"[concat(variables('factoryId'), '/datasets/ds_CustomerNew')]"
+				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CustomerCSV')]",
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_CustomerNew')]"
 			]
 		},
 		{
@@ -708,12 +749,13 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_Customer')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_Customer')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "SQL Server Dataset ",
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabaseLinkedService",
+					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -725,16 +767,16 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabaseLinkedService')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_CustomerNew')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_CustomerNew')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "AzureSqlDatabaseLinkedService",
+					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -772,7 +814,7 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabaseLinkedService')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		},
 		{
@@ -803,12 +845,13 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_blob_customerCsv')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CustomerCSV')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "Dataset for Azure Blob Storage",
 				"linkedServiceName": {
-					"referenceName": "AzureBlobStorageLink",
+					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
@@ -817,7 +860,7 @@
 					"location": {
 						"type": "AzureBlobStorageLocation",
 						"fileName": "ADF_Customer.csv",
-						"container": "newcontainer"
+						"container": "source"
 					},
 					"columnDelimiter": ",",
 					"escapeChar": "\\",
@@ -852,7 +895,7 @@
 				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/AzureBlobStorageLink')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
 			]
 		},
 		{
@@ -937,6 +980,33 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/pipelines/001_PL_Load_Customer')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_ABLB_ADFStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Linked server for Azure Blob Storage",
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_ADFCustomer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
+				}
+			},
+			"dependsOn": []
 		}
 	]
 }

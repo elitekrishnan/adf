@@ -16,6 +16,12 @@
 		},
 		"LinkedService_JSONFileSave_connectionString": {
 			"value": ""
+		},
+		"LS_ABLB_ADFStorage_connectionString": {
+			"value": ""
+		},
+		"LS_SQL_ADFCustomer_connectionString": {
+			"value": ""
 		}
 	}
 }
