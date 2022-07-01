@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Activity_CopyData",
+				"name": "Load Customer New table from CSV file",
 				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
@@ -117,13 +117,13 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_blob_customerCsv",
+						"referenceName": "DS_ABLB_CustomerCSV",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_CustomerNew",
+						"referenceName": "DS_SQL_CustomerNew",
 						"type": "DatasetReference"
 					}
 				]

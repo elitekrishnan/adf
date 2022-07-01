@@ -4,11 +4,11 @@
 		"description": "Pipeline to Load Customer information from Blob storage ",
 		"activities": [
 			{
-				"name": "Load Customer",
+				"name": "Load Customer from CSV file",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Truncate Table",
+						"activity": "Truncate Traget Table",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -138,7 +138,7 @@
 				]
 			},
 			{
-				"name": "Truncate Table",
+				"name": "Truncate Traget Table",
 				"type": "Lookup",
 				"dependsOn": [],
 				"policy": {

@@ -42,7 +42,7 @@
 					{
 						"activity": "Load New Customer",
 						"dependencyConditions": [
-							"Succeeded"
+							"Skipped"
 						]
 					}
 				],
