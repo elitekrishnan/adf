@@ -1,6 +1,7 @@
 {
-	"name": "ds_blob_customerCsv",
+	"name": "DS_ABLB_CustomerCSV",
 	"properties": {
+		"description": "Dataset for Azure Blob Storage",
 		"linkedServiceName": {
 			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
