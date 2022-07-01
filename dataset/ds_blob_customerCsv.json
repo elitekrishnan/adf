@@ -2,7 +2,7 @@
 	"name": "ds_blob_customerCsv",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureBlobStorageLink",
+			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
@@ -11,7 +11,7 @@
 			"location": {
 				"type": "AzureBlobStorageLocation",
 				"fileName": "ADF_Customer.csv",
-				"container": "newcontainer"
+				"container": "source"
 			},
 			"columnDelimiter": ",",
 			"escapeChar": "\\",
