@@ -49,7 +49,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"pipeline": {
-						"referenceName": "201_PL_UserList",
+						"referenceName": "201_PL_UserList_From_REST_API_to_SQL_Table",
 						"type": "PipelineReference"
 					},
 					"waitOnCompletion": true

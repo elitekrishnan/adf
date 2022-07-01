@@ -1,0 +1,16 @@
+{
+	"name": "DS_REST_APIUserDetails",
+	"properties": {
+		"description": "Dataset for Rest API",
+		"linkedServiceName": {
+			"referenceName": "LS_REST_API",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "API_UserDetails"
+		},
+		"annotations": [],
+		"type": "RestResource",
+		"schema": []
+	}
+}

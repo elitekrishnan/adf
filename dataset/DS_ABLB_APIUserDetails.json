@@ -1,19 +1,22 @@
 {
-	"name": "DS_SRC_ds_UserList_Json",
+	"name": "DS_ABLB_APIUserDetails",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "API_UserDetails"
 		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
-				"container": "source"
+				"fileName": "UserList",
+				"container": "target"
 			}
 		},
 		"schema": {}
-	},
-	"type": "Microsoft.DataFactory/factories/datasets"
+	}
 }

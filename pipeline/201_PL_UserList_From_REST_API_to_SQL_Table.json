@@ -1,10 +1,10 @@
 {
-	"name": "201_PL_UserList",
+	"name": "201_PL_UserList_From_REST_API_to_SQL_Table",
 	"properties": {
 		"activities": [
 			{
-				"name": "Web Request",
-				"type": "WebActivity",
+				"name": "REST API to Blob Storage",
+				"type": "Copy",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -15,28 +15,45 @@
 				},
 				"userProperties": [],
 				"typeProperties": {
-					"url": "https://gorest.co.in/public/v2/users",
-					"method": "GET",
-					"linkedServices": [
-						{
-							"referenceName": "LinkedService_JSON",
-							"type": "LinkedServiceReference"
+					"source": {
+						"type": "RestSource",
+						"httpRequestTimeout": "00:01:40",
+						"requestInterval": "00.00:00:00.010",
+						"requestMethod": "GET",
+						"paginationRules": {
+							"supportRFC5988": "true"
 						}
-					],
-					"datasets": [
-						{
-							"referenceName": "SRC_ds_UserList_Json",
-							"type": "DatasetReference"
+					},
+					"sink": {
+						"type": "JsonSink",
+						"storeSettings": {
+							"type": "AzureBlobStorageWriteSettings"
+						},
+						"formatSettings": {
+							"type": "JsonWriteSettings"
 						}
-					]
-				}
+					},
+					"enableStaging": false
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_REST_APIUserDetails",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_ABLB_APIUserDetails",
+						"type": "DatasetReference"
+					}
+				]
 			},
 			{
-				"name": "Copy data1",
+				"name": "Blob Storage to SQL Table",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Web Request",
+						"activity": "Delete existing data in target table",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -56,7 +73,6 @@
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
-							"wildcardFileName": "*.json",
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
@@ -64,29 +80,98 @@
 						}
 					},
 					"sink": {
-						"type": "JsonSink",
-						"storeSettings": {
-							"type": "AzureBlobStorageWriteSettings",
-							"copyBehavior": "MergeFiles"
-						},
-						"formatSettings": {
-							"type": "JsonWriteSettings"
-						}
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": true,
+						"disableMetricsCollection": false
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['userId']"
+								},
+								"sink": {
+									"name": "userId",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"path": "$['id']"
+								},
+								"sink": {
+									"name": "id",
+									"type": "Int64"
+								}
+							},
+							{
+								"source": {
+									"path": "$['title']"
+								},
+								"sink": {
+									"name": "title",
+									"type": "String"
+								}
+							},
+							{
+								"source": {
+									"path": "$['body']"
+								},
+								"sink": {
+									"name": "body",
+									"type": "String"
+								}
+							}
+						]
+					}
 				},
 				"inputs": [
 					{
-						"referenceName": "SRC_ds_UserList_Json",
+						"referenceName": "DS_ABLB_APIUserDetails",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "TGT_ds_UserList_Json",
+						"referenceName": "DS_SQL_APIUserDetails",
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Delete existing data in target table",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "REST API to Blob Storage",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "Truncate table dbo.adf_UserDetails;\nSelect 0 as Id;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_SQL_APIUserDetails",
+						"type": "DatasetReference"
+					}
+				}
 			}
 		],
 		"variables": {
