@@ -4,9 +4,16 @@
 		"description": "Pipeline to Load Customer information from Blob storage ",
 		"activities": [
 			{
-				"name": "copyData_Customer",
+				"name": "Load Customer",
 				"type": "Copy",
-				"dependsOn": [],
+				"dependsOn": [
+					{
+						"activity": "Truncate Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
 				"policy": {
 					"timeout": "7.00:00:00",
 					"retry": 0,
@@ -119,16 +126,41 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_blob_customerCsv",
+						"referenceName": "DS_ABLB_CustomerCSV",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_Customer",
+						"referenceName": "DS_SQL_Customer",
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Truncate Table",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "Truncate Table dbo.adf_Customer;\nSelect 0 as Id;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_SQL_Customer",
+						"type": "DatasetReference"
+					}
+				}
 			}
 		],
 		"folder": {
