@@ -1,8 +1,8 @@
 {
-	"name": "ds_CustomerNew",
+	"name": "DS_SQL_CustomerNew",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabaseLinkedService",
+			"referenceName": "LS_SQL_ADFCustomer",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
