@@ -6,11 +6,15 @@
 			"referenceName": "LinkedService_JSON",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Others"
+		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
 			"location": {
 				"type": "AzureBlobStorageLocation",
+				"fileName": "WebActivity.json",
 				"container": "input"
 			}
 		},

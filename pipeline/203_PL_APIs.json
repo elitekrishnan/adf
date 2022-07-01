@@ -30,7 +30,7 @@
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Entries",
+						"activity": "Set variable1",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -46,15 +46,23 @@
 				"userProperties": [],
 				"typeProperties": {
 					"source": {
-						"type": "JsonSource",
+						"type": "DelimitedTextSource",
+						"additionalColumns": [
+							{
+								"name": "newColumn",
+								"value": {
+									"value": "@variables('API_Output')",
+									"type": "Expression"
+								}
+							}
+						],
 						"storeSettings": {
 							"type": "AzureBlobStorageReadSettings",
 							"recursive": true,
-							"wildcardFileName": "*.json",
 							"enablePartitionDiscovery": false
 						},
 						"formatSettings": {
-							"type": "JsonReadSettings"
+							"type": "DelimitedTextReadSettings"
 						}
 					},
 					"sink": {
@@ -67,11 +75,25 @@
 							"type": "JsonWriteSettings"
 						}
 					},
-					"enableStaging": false
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"type": "String",
+									"ordinal": 1
+								},
+								"sink": {
+									"path": "$"
+								}
+							}
+						]
+					}
 				},
 				"inputs": [
 					{
-						"referenceName": "ds_API_to_WebActivity_Json",
+						"referenceName": "DelimitedText1",
 						"type": "DatasetReference"
 					}
 				],
@@ -81,8 +103,33 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Entries",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "API_Output",
+					"value": {
+						"value": "@{activity('Entries').output}",
+						"type": "Expression"
+					}
+				}
 			}
 		],
+		"variables": {
+			"API_Output": {
+				"type": "String"
+			}
+		},
 		"folder": {
 			"name": "ADF Pipeline/200_PL_API_Load"
 		},

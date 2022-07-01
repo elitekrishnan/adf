@@ -5,6 +5,9 @@
 			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Others"
+		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {

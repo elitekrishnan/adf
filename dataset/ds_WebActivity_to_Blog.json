@@ -5,6 +5,9 @@
 			"referenceName": "LinkedService_JSON",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "Others"
+		},
 		"annotations": [],
 		"type": "Json",
 		"typeProperties": {
