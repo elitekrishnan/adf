@@ -3,7 +3,7 @@
 	"properties": {
 		"description": "SQL Server Dataset ",
 		"linkedServiceName": {
-			"referenceName": "AzureSqlDatabaseLinkedService",
+			"referenceName": "LS_SQL_ADFCustomer",
 			"type": "LinkedServiceReference"
 		},
 		"annotations": [],
