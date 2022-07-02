@@ -426,6 +426,27 @@
 							"waitOnCompletion": true,
 							"parameters": {}
 						}
+					},
+					{
+						"name": "Get and Load Cat Breeds",
+						"type": "ExecutePipeline",
+						"dependsOn": [
+							{
+								"activity": "003_PL_UserList",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "202_PL_WebActivity_APIs",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {}
+						}
 					}
 				],
 				"policy": {
@@ -438,7 +459,9 @@
 				"annotations": [],
 				"lastPublishTime": "2022-06-27T04:52:24Z"
 			},
-			"dependsOn": []
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/202_PL_WebActivity_APIs')]"
+			]
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/trigger-Customer')]",
