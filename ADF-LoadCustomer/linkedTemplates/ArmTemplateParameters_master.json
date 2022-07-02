@@ -5,13 +5,13 @@
 		"factoryName": {
 			"value": "ADF-LoadCustomer"
 		},
-		"LinkedService_JSON_connectionString": {
-			"value": ""
-		},
 		"LS_ABLB_ADFStorage_connectionString": {
 			"value": ""
 		},
 		"LS_SQL_ADFCustomer_connectionString": {
+			"value": ""
+		},
+		"LinkedService_JSON_connectionString": {
 			"value": ""
 		},
 		"LS_REST_API_properties_typeProperties_url": {

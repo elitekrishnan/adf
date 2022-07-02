@@ -7,10 +7,6 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADF-LoadCustomer"
 		},
-		"LinkedService_JSON_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
-		},
 		"LS_ABLB_ADFStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_ABLB_ADFStorage'"
@@ -18,6 +14,10 @@
 		"LS_SQL_ADFCustomer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
+		},
+		"LinkedService_JSON_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
 		},
 		"LS_REST_API_properties_typeProperties_url": {
 			"type": "string",
@@ -632,6 +632,9 @@
 				"variables": {
 					"OutputFileName": {
 						"type": "String"
+					},
+					"var_catBreedsJsonId": {
+						"type": "String"
 					}
 				},
 				"folder": {
@@ -653,7 +656,7 @@
 			"properties": {
 				"activities": [
 					{
-						"name": "Entries",
+						"name": "Get Data from Web",
 						"type": "WebActivity",
 						"dependsOn": [],
 						"policy": {
@@ -667,22 +670,15 @@
 						"typeProperties": {
 							"url": "https://catfact.ninja/breeds",
 							"method": "GET",
-							"headers": {},
-							"datasets": [
-								{
-									"referenceName": "ds_API_to_WebActivity_Json",
-									"type": "DatasetReference",
-									"parameters": {}
-								}
-							]
+							"headers": {}
 						}
 					},
 					{
-						"name": "Copy data1",
+						"name": "Save data to Blob",
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Set variable1",
+								"activity": "Get Web data to Variable",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -701,9 +697,9 @@
 								"type": "DelimitedTextSource",
 								"additionalColumns": [
 									{
-										"name": "newColumn",
+										"name": "WebDataColumn",
 										"value": {
-											"value": "@variables('API_Output')",
+											"value": "@{variables('API_Output')}",
 											"type": "Expression"
 										}
 									}
@@ -733,20 +729,11 @@
 								"mappings": [
 									{
 										"source": {
-											"name": "Template_Column",
+											"name": "WebDataColumn",
 											"type": "String"
 										},
 										"sink": {
-											"path": "$[']]"
-										}
-									},
-									{
-										"source": {
-											"name": "newColumn",
-											"type": "String"
-										},
-										"sink": {
-											"path": "$['$[\\']]']"
+											"path": "$['root']"
 										}
 									}
 								]
@@ -754,25 +741,25 @@
 						},
 						"inputs": [
 							{
-								"referenceName": "DelimitedText1",
+								"referenceName": "DS_ABLB_CSV_Dummay",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						],
 						"outputs": [
 							{
-								"referenceName": "ds_WebActivity_to_Blog",
+								"referenceName": "DS_ABLB_JSON_File",
 								"type": "DatasetReference",
 								"parameters": {}
 							}
 						]
 					},
 					{
-						"name": "Set variable1",
+						"name": "Get Web data to Variable",
 						"type": "SetVariable",
 						"dependsOn": [
 							{
-								"activity": "Entries",
+								"activity": "Get Data from Web",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -782,9 +769,216 @@
 						"typeProperties": {
 							"variableName": "API_Output",
 							"value": {
-								"value": "@{activity('Entries').output}",
+								"value": "@{activity('Get Data from Web').output}",
 								"type": "Expression"
 							}
+						}
+					},
+					{
+						"name": "Blob to SQL DB",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Save data to Blob",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "JsonSource",
+								"storeSettings": {
+									"type": "AzureBlobStorageReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "JsonReadSettings"
+								}
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"path": "$['root']"
+										},
+										"sink": {
+											"name": "JsonValue",
+											"type": "String"
+										}
+									}
+								],
+								"collectionReference": "",
+								"mapComplexValuesToString": true
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "DS_ABLB_JSON_File",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "DS_SQL_CatBreeds_JsonFormat",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					},
+					{
+						"name": "Truncate Cat Breed Table",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Blob to SQL DB",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "Truncate table dbo.adf_catBreeds;\nSelect 0 as Id;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_SQL_CatBreeds",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						}
+					},
+					{
+						"name": "ForEach Cat Breeds JSon",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Records for Insert",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Records for Insert').output.value",
+								"type": "Expression"
+							},
+							"isSequential": true,
+							"activities": [
+								{
+									"name": "Stored procedure for Cat Breed Insert",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Get Id Value",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[sp_adf_CatBreedInsert]",
+										"storedProcedureParameters": {
+											"Id": {
+												"value": {
+													"value": "@variables('var_catBreedsJsonId')",
+													"type": "Expression"
+												},
+												"type": "Int64"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ADFCustomer",
+										"type": "LinkedServiceReference"
+									}
+								},
+								{
+									"name": "Get Id Value",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "var_catBreedsJsonId",
+										"value": {
+											"value": "@{item().id}",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Records for Insert",
+						"type": "Lookup",
+						"dependsOn": [
+							{
+								"activity": "Truncate Cat Breed Table",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"sqlReaderQuery": "Select id From dbo.adf_catBreedsJsonFormat;",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"dataset": {
+								"referenceName": "DS_SQL_CatBreeds_JsonFormat",
+								"type": "DatasetReference",
+								"parameters": {}
+							},
+							"firstRowOnly": false
 						}
 					}
 				],
@@ -795,6 +989,9 @@
 				"variables": {
 					"API_Output": {
 						"type": "String"
+					},
+					"var_catBreedsJsonId": {
+						"type": "String"
 					}
 				},
 				"folder": {
@@ -804,13 +1001,15 @@
 				"lastPublishTime": "2022-06-27T07:58:34Z"
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/ds_API_to_WebActivity_Json')]",
-				"[concat(variables('factoryId'), '/datasets/DelimitedText1')]",
-				"[concat(variables('factoryId'), '/datasets/ds_WebActivity_to_Blog')]"
+				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CSV_Dummay')]",
+				"[concat(variables('factoryId'), '/datasets/DS_ABLB_JSON_File')]",
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_CatBreeds_JsonFormat')]",
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_CatBreeds')]",
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_SRC_ds_UserList_Json')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_APIUserDetails')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -819,14 +1018,15 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "Others"
+					"name": "REST_API_UserDetails"
 				},
 				"annotations": [],
 				"type": "Json",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"container": "source"
+						"fileName": "UserList",
+						"container": "target"
 					}
 				},
 				"schema": {}
@@ -836,61 +1036,125 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/TGT_ds_UserList_Json')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CustomerCSV')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "Dataset for Azure Blob Storage",
 				"linkedServiceName": {
-					"referenceName": "LinkedService_JSON",
+					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "Others"
+					"name": "Customer"
 				},
 				"annotations": [],
-				"type": "Json",
+				"type": "DelimitedText",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": {
-							"value": "@concat(formatDateTime(subtractFromTime(utcNow(),1,'Month'), 'yyyy-MM'), '.json')",
-							"type": "Expression"
-						},
-						"container": "newcontainer"
-					}
+						"fileName": "ADF_Customer.csv",
+						"container": "source"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
 				},
-				"schema": {}
+				"schema": [
+					{
+						"name": "id",
+						"type": "String"
+					},
+					{
+						"name": "first_name",
+						"type": "String"
+					},
+					{
+						"name": "last_name",
+						"type": "String"
+					},
+					{
+						"name": "email",
+						"type": "String"
+					},
+					{
+						"name": "dob",
+						"type": "String"
+					},
+					{
+						"name": "ip_address",
+						"type": "String"
+					}
+				]
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_API_to_WebActivity_Json')]",
+			"name": "[concat(parameters('factoryName'), '/DS_REST_APIUserDetails')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "Datasource from Web API to store in Blob storage",
+				"description": "Dataset for Rest API",
 				"linkedServiceName": {
-					"referenceName": "LinkedService_JSON",
+					"referenceName": "LS_REST_API",
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "Others"
+					"name": "REST_API_UserDetails"
 				},
 				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "WebActivity.json",
-						"container": "input"
-					}
-				},
-				"schema": {}
+				"type": "RestResource",
+				"typeProperties": {},
+				"schema": []
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_REST_API')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_APIUserDetails')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "REST_API_UserDetails"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "userId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "body",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adf_UserDetails"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		},
 		{
@@ -969,12 +1233,128 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/ds_WebActivity_to_Blog')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SRC_ds_UserList_Json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Others"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"container": "source"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CSV_Dummay')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Templace.csv",
+						"container": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "",
+					"firstRowAsHeader": true,
+					"quoteChar": ""
+				},
+				"schema": [
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/TGT_ds_UserList_Json')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
 					"referenceName": "LinkedService_JSON",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Others"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "@concat(formatDateTime(subtractFromTime(utcNow(),1,'Month'), 'yyyy-MM'), '.json')",
+							"type": "Expression"
+						},
+						"container": "newcontainer"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ds_API_to_WebActivity_Json')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Datasource from Web API to store in Blob storage",
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Others"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "WebActivity.json",
+						"container": "input"
+					}
+				},
+				"schema": {}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_JSON_File')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
@@ -995,65 +1375,51 @@
 				"schema": {}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LinkedService_JSON')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CustomerCSV')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/LS_ABLB_ADFStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "Dataset for Azure Blob Storage",
-				"linkedServiceName": {
-					"referenceName": "LS_ABLB_ADFStorage",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "Customer"
-				},
+				"description": "Linked server for Azure Blob Storage",
 				"annotations": [],
-				"type": "DelimitedText",
+				"type": "AzureBlobStorage",
 				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "ADF_Customer.csv",
-						"container": "source"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
-				"schema": [
-					{
-						"name": "id",
-						"type": "String"
-					},
-					{
-						"name": "first_name",
-						"type": "String"
-					},
-					{
-						"name": "last_name",
-						"type": "String"
-					},
-					{
-						"name": "email",
-						"type": "String"
-					},
-					{
-						"name": "dob",
-						"type": "String"
-					},
-					{
-						"name": "ip_address",
-						"type": "String"
-					}
-				]
+					"connectionString": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
+				}
 			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
-			]
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_REST_API')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Linked Service for Rest API",
+				"annotations": [],
+				"type": "RestService",
+				"typeProperties": {
+					"url": "[parameters('LS_REST_API_properties_typeProperties_url')]",
+					"enableServerCertificateValidation": true,
+					"authenticationType": "Anonymous"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/LS_SQL_ADFCustomer')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
+				}
+			},
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('factoryName'), '/LinkedService_JSON')]",
@@ -1099,99 +1465,7 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/LS_ABLB_ADFStorage')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "Linked server for Azure Blob Storage",
-				"annotations": [],
-				"type": "AzureBlobStorage",
-				"typeProperties": {
-					"connectionString": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/LS_SQL_ADFCustomer')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"annotations": [],
-				"type": "AzureSqlDatabase",
-				"typeProperties": {
-					"connectionString": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/LS_REST_API')]",
-			"type": "Microsoft.DataFactory/factories/linkedServices",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "Linked Service for Rest API",
-				"annotations": [],
-				"type": "RestService",
-				"typeProperties": {
-					"url": "[parameters('LS_REST_API_properties_typeProperties_url')]",
-					"enableServerCertificateValidation": true,
-					"authenticationType": "Anonymous"
-				}
-			},
-			"dependsOn": []
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_REST_APIUserDetails')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"description": "Dataset for Rest API",
-				"linkedServiceName": {
-					"referenceName": "LS_REST_API",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "API_UserDetails"
-				},
-				"annotations": [],
-				"type": "RestResource",
-				"typeProperties": {},
-				"schema": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_REST_API')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_ABLB_APIUserDetails')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_ABLB_ADFStorage",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "API_UserDetails"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "UserList",
-						"container": "target"
-					}
-				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_SQL_APIUserDetails')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -1199,34 +1473,40 @@
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
 				},
-				"folder": {
-					"name": "API_UserDetails"
-				},
 				"annotations": [],
 				"type": "AzureSqlTable",
 				"schema": [
-					{
-						"name": "userId",
-						"type": "bigint",
-						"precision": 19
-					},
 					{
 						"name": "id",
 						"type": "bigint",
 						"precision": 19
 					},
 					{
-						"name": "title",
-						"type": "nvarchar"
+						"name": "breed",
+						"type": "nchar"
 					},
 					{
-						"name": "body",
-						"type": "nvarchar"
+						"name": "country",
+						"type": "nchar"
+					},
+					{
+						"name": "origin",
+						"type": "nchar"
+					},
+					{
+						"name": "pattern",
+						"type": "nchar"
+					},
+					{
+						"name": "lastUpdated",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
 					}
 				],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "adf_UserDetails"
+					"table": "adf_catBreeds"
 				}
 			},
 			"dependsOn": [
@@ -1234,35 +1514,52 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds_JsonFormat')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "LS_ABLB_ADFStorage",
+					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
 				},
 				"annotations": [],
-				"type": "DelimitedText",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "Templace.csv",
-						"container": "input"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "\\",
-					"firstRowAsHeader": true,
-					"quoteChar": "\""
-				},
+				"type": "AzureSqlTable",
 				"schema": [
 					{
-						"type": "String"
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "breed",
+						"type": "nchar"
+					},
+					{
+						"name": "country",
+						"type": "nchar"
+					},
+					{
+						"name": "origin",
+						"type": "nchar"
+					},
+					{
+						"name": "pattern",
+						"type": "nchar"
+					},
+					{
+						"name": "lastUpdated",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
 					}
-				]
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adf_catBreedsJsonFormat"
+				}
 			},
 			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		}
 	]

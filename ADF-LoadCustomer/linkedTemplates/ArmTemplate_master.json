@@ -7,10 +7,6 @@
 			"metadata": "Data Factory name",
 			"defaultValue": "ADF-LoadCustomer"
 		},
-		"LinkedService_JSON_connectionString": {
-			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
-		},
 		"LS_ABLB_ADFStorage_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_ABLB_ADFStorage'"
@@ -18,6 +14,10 @@
 		"LS_SQL_ADFCustomer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'LS_SQL_ADFCustomer'"
+		},
+		"LinkedService_JSON_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'LinkedService_JSON'"
 		},
 		"LS_REST_API_properties_typeProperties_url": {
 			"type": "string",
@@ -50,14 +50,14 @@
 					"factoryName": {
 						"value": "[parameters('factoryName')]"
 					},
-					"LinkedService_JSON_connectionString": {
-						"value": "[parameters('LinkedService_JSON_connectionString')]"
-					},
 					"LS_ABLB_ADFStorage_connectionString": {
 						"value": "[parameters('LS_ABLB_ADFStorage_connectionString')]"
 					},
 					"LS_SQL_ADFCustomer_connectionString": {
 						"value": "[parameters('LS_SQL_ADFCustomer_connectionString')]"
+					},
+					"LinkedService_JSON_connectionString": {
+						"value": "[parameters('LinkedService_JSON_connectionString')]"
 					},
 					"LS_REST_API_properties_typeProperties_url": {
 						"value": "[parameters('LS_REST_API_properties_typeProperties_url')]"
