@@ -5,6 +5,9 @@
 			"referenceName": "LS_SQL_ADFCustomer",
 			"type": "LinkedServiceReference"
 		},
+		"folder": {
+			"name": "WebActivity"
+		},
 		"annotations": [],
 		"type": "AzureSqlTable",
 		"schema": [

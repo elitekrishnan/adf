@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "Others"
+			"name": "WebActivity"
 		},
 		"annotations": [],
 		"type": "Json",
