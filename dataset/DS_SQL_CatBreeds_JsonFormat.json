@@ -1,0 +1,44 @@
+{
+	"name": "DS_SQL_CatBreeds_JsonFormat",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_ADFCustomer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "breed",
+				"type": "nchar"
+			},
+			{
+				"name": "country",
+				"type": "nchar"
+			},
+			{
+				"name": "origin",
+				"type": "nchar"
+			},
+			{
+				"name": "pattern",
+				"type": "nchar"
+			},
+			{
+				"name": "lastUpdated",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "adf_catBreedsJsonFormat"
+		}
+	}
+}

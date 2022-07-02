@@ -1,9 +1,9 @@
 {
-	"name": "ds_API_to_WebActivity_Json",
+	"name": "DS_ds_API_to_WebActivity_Json",
 	"properties": {
 		"description": "Datasource from Web API to store in Blob storage",
 		"linkedServiceName": {
-			"referenceName": "LinkedService_JSON",
+			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {

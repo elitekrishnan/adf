@@ -1,8 +1,8 @@
 {
-	"name": "ds_WebActivity_to_Blog",
+	"name": "DS_ABLB_JSON_File",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "LinkedService_JSON",
+			"referenceName": "LS_ABLB_ADFStorage",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {

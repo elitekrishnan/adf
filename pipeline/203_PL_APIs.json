@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Entries",
+				"name": "Get Data from Web",
 				"type": "WebActivity",
 				"dependsOn": [],
 				"policy": {
@@ -16,21 +16,15 @@
 				"userProperties": [],
 				"typeProperties": {
 					"url": "https://catfact.ninja/breeds",
-					"method": "GET",
-					"datasets": [
-						{
-							"referenceName": "ds_API_to_WebActivity_Json",
-							"type": "DatasetReference"
-						}
-					]
+					"method": "GET"
 				}
 			},
 			{
-				"name": "Copy data1",
+				"name": "Save data to Blob",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Set variable1",
+						"activity": "Get Web data to Variable",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -49,9 +43,9 @@
 						"type": "DelimitedTextSource",
 						"additionalColumns": [
 							{
-								"name": "newColumn",
+								"name": "WebDataColumn",
 								"value": {
-									"value": "@variables('API_Output')",
+									"value": "@{variables('API_Output')}",
 									"type": "Expression"
 								}
 							}
@@ -81,20 +75,11 @@
 						"mappings": [
 							{
 								"source": {
-									"name": "Template_Column",
+									"name": "WebDataColumn",
 									"type": "String"
 								},
 								"sink": {
-									"path": "$[']]"
-								}
-							},
-							{
-								"source": {
-									"name": "newColumn",
-									"type": "String"
-								},
-								"sink": {
-									"path": "$['$[\\']]']"
+									"path": "$['root']"
 								}
 							}
 						]
@@ -102,23 +87,23 @@
 				},
 				"inputs": [
 					{
-						"referenceName": "DelimitedText1",
+						"referenceName": "DS_ABLB_CSV_Dummay",
 						"type": "DatasetReference"
 					}
 				],
 				"outputs": [
 					{
-						"referenceName": "ds_WebActivity_to_Blog",
+						"referenceName": "DS_ABLB_JSON_File",
 						"type": "DatasetReference"
 					}
 				]
 			},
 			{
-				"name": "Set variable1",
+				"name": "Get Web data to Variable",
 				"type": "SetVariable",
 				"dependsOn": [
 					{
-						"activity": "Entries",
+						"activity": "Get Data from Web",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -128,14 +113,220 @@
 				"typeProperties": {
 					"variableName": "API_Output",
 					"value": {
-						"value": "@{activity('Entries').output}",
+						"value": "@{activity('Get Data from Web').output}",
 						"type": "Expression"
 					}
+				}
+			},
+			{
+				"name": "Blob to SQL DB",
+				"type": "Copy",
+				"dependsOn": [
+					{
+						"activity": "Save data to Blob",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobStorageReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"sink": {
+						"type": "AzureSqlSink",
+						"writeBehavior": "insert",
+						"sqlWriterUseTableLock": false
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"mappings": [
+							{
+								"source": {
+									"path": "$['root']"
+								},
+								"sink": {
+									"name": "JsonValue",
+									"type": "String"
+								}
+							}
+						],
+						"collectionReference": "",
+						"mapComplexValuesToString": true
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "DS_ABLB_JSON_File",
+						"type": "DatasetReference"
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "DS_SQL_CatBreeds_JsonFormat",
+						"type": "DatasetReference"
+					}
+				]
+			},
+			{
+				"name": "Truncate Cat Breed Table",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Blob to SQL DB",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "Truncate table dbo.adf_catBreeds;\nSelect 0 as Id;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_SQL_CatBreeds",
+						"type": "DatasetReference"
+					}
+				}
+			},
+			{
+				"name": "ForEach Cat Breeds JSon",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Records for Insert",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Records for Insert').output.value",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Stored procedure for Cat Breed Insert",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Get Id Value",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[sp_adf_CatBreedInsert]",
+								"storedProcedureParameters": {
+									"Id": {
+										"value": {
+											"value": "@variables('var_catBreedsJsonId')",
+											"type": "Expression"
+										},
+										"type": "Int64"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_SQL_ADFCustomer",
+								"type": "LinkedServiceReference"
+							}
+						},
+						{
+							"name": "Get Id Value",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "var_catBreedsJsonId",
+								"value": {
+									"value": "@{item().id}",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Records for Insert",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Truncate Cat Breed Table",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": "Select id From dbo.adf_catBreedsJsonFormat;",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "DS_SQL_CatBreeds_JsonFormat",
+						"type": "DatasetReference"
+					},
+					"firstRowOnly": false
 				}
 			}
 		],
 		"variables": {
 			"API_Output": {
+				"type": "String"
+			},
+			"var_catBreedsJsonId": {
 				"type": "String"
 			}
 		},

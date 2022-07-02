@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "API_UserDetails"
+			"name": "REST_API_UserDetails"
 		},
 		"annotations": [],
 		"type": "Json",

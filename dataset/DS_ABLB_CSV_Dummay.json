@@ -1,5 +1,5 @@
 {
-	"name": "DelimitedText1",
+	"name": "DS_ABLB_CSV_Dummay",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "LS_ABLB_ADFStorage",
@@ -14,9 +14,9 @@
 				"container": "input"
 			},
 			"columnDelimiter": ",",
-			"escapeChar": "\\",
+			"escapeChar": "",
 			"firstRowAsHeader": true,
-			"quoteChar": "\""
+			"quoteChar": ""
 		},
 		"schema": [
 			{
