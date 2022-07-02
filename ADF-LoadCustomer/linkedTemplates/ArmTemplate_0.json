@@ -343,6 +343,9 @@
 					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
 				},
+				"folder": {
+					"name": "WebActivity"
+				},
 				"annotations": [],
 				"type": "DelimitedText",
 				"typeProperties": {
@@ -434,7 +437,7 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "Others"
+					"name": "WebActivity"
 				},
 				"annotations": [],
 				"type": "Json",
@@ -462,6 +465,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -511,6 +517,9 @@
 				"linkedServiceName": {
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
