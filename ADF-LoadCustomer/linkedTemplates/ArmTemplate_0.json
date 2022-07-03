@@ -112,6 +112,41 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CSV_Dummay')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "Templace.csv",
+						"container": "input"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "",
+					"firstRowAsHeader": true,
+					"quoteChar": ""
+				},
+				"schema": [
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CustomerCSV')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -163,6 +198,36 @@
 						"type": "String"
 					}
 				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_ABLB_JSON_File')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_ABLB_ADFStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
+				},
+				"annotations": [],
+				"type": "Json",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": {
+							"value": "catbreeds.json",
+							"type": "Expression"
+						},
+						"container": "output"
+					}
+				},
+				"schema": {}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
@@ -227,6 +292,110 @@
 				"typeProperties": {
 					"schema": "dbo",
 					"table": "adf_UserDetails"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "breed",
+						"type": "nchar"
+					},
+					{
+						"name": "country",
+						"type": "nchar"
+					},
+					{
+						"name": "origin",
+						"type": "nchar"
+					},
+					{
+						"name": "pattern",
+						"type": "nchar"
+					},
+					{
+						"name": "lastUpdated",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adf_catBreeds"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds_JsonFormat')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "WebActivity"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "breed",
+						"type": "nchar"
+					},
+					{
+						"name": "country",
+						"type": "nchar"
+					},
+					{
+						"name": "origin",
+						"type": "nchar"
+					},
+					{
+						"name": "pattern",
+						"type": "nchar"
+					},
+					{
+						"name": "lastUpdated",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adf_catBreedsJsonFormat"
 				}
 			},
 			"dependsOn": [
@@ -335,35 +504,28 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_ABLB_CSV_Dummay')]",
+			"name": "[concat(parameters('factoryName'), '/DS_ds_API_to_WebActivity_Json')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
+				"description": "Datasource from Web API to store in Blob storage",
 				"linkedServiceName": {
 					"referenceName": "LS_ABLB_ADFStorage",
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "WebActivity"
+					"name": "Others"
 				},
 				"annotations": [],
-				"type": "DelimitedText",
+				"type": "Json",
 				"typeProperties": {
 					"location": {
 						"type": "AzureBlobStorageLocation",
-						"fileName": "Templace.csv",
+						"fileName": "WebActivity.json",
 						"container": "input"
-					},
-					"columnDelimiter": ",",
-					"escapeChar": "",
-					"firstRowAsHeader": true,
-					"quoteChar": ""
-				},
-				"schema": [
-					{
-						"type": "String"
 					}
-				]
+				},
+				"schema": {}
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
@@ -400,117 +562,194 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_ds_API_to_WebActivity_Json')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
+			"name": "[concat(parameters('factoryName'), '/203_PL_adequateshop_DataLoad')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
 			"properties": {
-				"description": "Datasource from Web API to store in Blob storage",
-				"linkedServiceName": {
-					"referenceName": "LS_ABLB_ADFStorage",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "Others"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": "WebActivity.json",
-						"container": "input"
-					}
-				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_ABLB_JSON_File')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_ABLB_ADFStorage",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "WebActivity"
-				},
-				"annotations": [],
-				"type": "Json",
-				"typeProperties": {
-					"location": {
-						"type": "AzureBlobStorageLocation",
-						"fileName": {
-							"value": "catbreeds.json",
-							"type": "Expression"
+				"activities": [
+					{
+						"name": "Get Token from Web",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
 						},
-						"container": "output"
-					}
-				},
-				"schema": {}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_ABLB_ADFStorage')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_SQL_ADFCustomer",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "WebActivity"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "id",
-						"type": "bigint",
-						"precision": 19
+						"userProperties": [],
+						"typeProperties": {
+							"url": "http://restapi.adequateshop.com/api/authaccount/login",
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@concat('{\"email\":\"',pipeline().parameters.PRM_email,'\",\"password\":\"',pipeline().parameters.PRM_password,'\"}')",
+								"type": "Expression"
+							}
+						}
 					},
 					{
-						"name": "breed",
-						"type": "nchar"
+						"name": "Token from JSON Output",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Token from Web",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "VAR_Token",
+							"value": {
+								"value": "@{activity('Get Token from Web').output.data.Token}",
+								"type": "Expression"
+							}
+						}
 					},
 					{
-						"name": "country",
-						"type": "nchar"
+						"name": "Get All User with Token",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Token from JSON Output",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "http://restapi.adequateshop.com/api/users?page=1",
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@{concat('Bearer ',variables('VAR_Token'))}",
+									"type": "Expression"
+								}
+							},
+							"body": ""
+						}
 					},
 					{
-						"name": "origin",
-						"type": "nchar"
-					},
-					{
-						"name": "pattern",
-						"type": "nchar"
-					},
-					{
-						"name": "lastUpdated",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
+						"name": "ForEach User Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get All User with Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get All User with Token').output.data",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 10,
+							"activities": [
+								{
+									"name": "Get Each Rows Value",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "VAR_UserData",
+										"value": {
+											"value": "@{item()}",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Save value to Table",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Get Each Rows Value",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[sp_adequateshop_UserInsert]",
+										"storedProcedureParameters": {
+											"JsonData": {
+												"value": {
+													"value": "@{variables('VAR_UserData')}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pageId": {
+												"value": "1",
+												"type": "Int64"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ADFCustomer",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
 					}
 				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "adf_catBreeds"
-				}
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"PRM_email": {
+						"type": "string",
+						"defaultValue": "krishnanssampleapi@gmail.com"
+					},
+					"PRM_password": {
+						"type": "string",
+						"defaultValue": "123456"
+					}
+				},
+				"variables": {
+					"VAR_Token": {
+						"type": "String"
+					},
+					"VAR_UserData": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "ADF Pipeline/200_PL_API_Load"
+				},
+				"annotations": []
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/DS_SQL_CatBreeds_JsonFormat')]",
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_adequateshop_User')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
 			"properties": {
@@ -519,7 +758,7 @@
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
-					"name": "WebActivity"
+					"name": "adequateshop"
 				},
 				"annotations": [],
 				"type": "AzureSqlTable",
@@ -530,23 +769,33 @@
 						"precision": 19
 					},
 					{
-						"name": "breed",
+						"name": "pageId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "userId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "email",
 						"type": "nchar"
 					},
 					{
-						"name": "country",
+						"name": "profilepicture",
 						"type": "nchar"
 					},
 					{
-						"name": "origin",
+						"name": "location",
 						"type": "nchar"
 					},
 					{
-						"name": "pattern",
-						"type": "nchar"
-					},
-					{
-						"name": "lastUpdated",
+						"name": "createdat",
 						"type": "datetime",
 						"precision": 23,
 						"scale": 3
@@ -554,7 +803,7 @@
 				],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "adf_catBreedsJsonFormat"
+					"table": "adequateshop_User"
 				}
 			},
 			"dependsOn": [
@@ -744,363 +993,6 @@
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CustomerCSV')]",
 				"[concat(variables('factoryId'), '/datasets/DS_SQL_Customer')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/102_PL_Load_CustomerNew')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Load Customer New table from CSV file",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "DelimitedTextSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "DelimitedTextReadSettings"
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"name": "id",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "id",
-											"type": "Int64",
-											"physicalType": "bigint"
-										}
-									},
-									{
-										"source": {
-											"name": "first_name",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "first_name",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "last_name",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "last_name",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "email",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "email",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									},
-									{
-										"source": {
-											"name": "dob",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "dob",
-											"type": "DateTime",
-											"physicalType": "date"
-										}
-									},
-									{
-										"source": {
-											"name": "ip_address",
-											"type": "String",
-											"physicalType": "String"
-										},
-										"sink": {
-											"name": "ip_address",
-											"type": "String",
-											"physicalType": "varchar"
-										}
-									}
-								],
-								"typeConversion": true,
-								"typeConversionSettings": {
-									"allowDataTruncation": true,
-									"treatBooleanAsNumber": false
-								}
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "DS_ABLB_CustomerCSV",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "DS_SQL_CustomerNew",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"folder": {
-					"name": "ADF Pipeline/100_PL_Customer"
-				},
-				"annotations": [],
-				"lastPublishTime": "2022-06-27T03:22:36Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CustomerCSV')]",
-				"[concat(variables('factoryId'), '/datasets/DS_SQL_CustomerNew')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/201_PL_UserList_From_REST_API_to_SQL_Table')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "REST API to Blob Storage",
-						"type": "Copy",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "RestSource",
-								"httpRequestTimeout": "00:01:40",
-								"requestInterval": "00.00:00:00.010",
-								"requestMethod": "GET",
-								"paginationRules": {
-									"supportRFC5988": "true"
-								}
-							},
-							"sink": {
-								"type": "JsonSink",
-								"storeSettings": {
-									"type": "AzureBlobStorageWriteSettings"
-								},
-								"formatSettings": {
-									"type": "JsonWriteSettings"
-								}
-							},
-							"enableStaging": false
-						},
-						"inputs": [
-							{
-								"referenceName": "DS_REST_APIUserDetails",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "DS_ABLB_APIUserDetails",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "Blob Storage to SQL Table",
-						"type": "Copy",
-						"dependsOn": [
-							{
-								"activity": "Delete existing data in target table",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "JsonSource",
-								"storeSettings": {
-									"type": "AzureBlobStorageReadSettings",
-									"recursive": true,
-									"enablePartitionDiscovery": false
-								},
-								"formatSettings": {
-									"type": "JsonReadSettings"
-								}
-							},
-							"sink": {
-								"type": "AzureSqlSink",
-								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": true,
-								"disableMetricsCollection": false
-							},
-							"enableStaging": false,
-							"translator": {
-								"type": "TabularTranslator",
-								"mappings": [
-									{
-										"source": {
-											"path": "$['userId']"
-										},
-										"sink": {
-											"name": "userId",
-											"type": "Int64"
-										}
-									},
-									{
-										"source": {
-											"path": "$['id']"
-										},
-										"sink": {
-											"name": "id",
-											"type": "Int64"
-										}
-									},
-									{
-										"source": {
-											"path": "$['title']"
-										},
-										"sink": {
-											"name": "title",
-											"type": "String"
-										}
-									},
-									{
-										"source": {
-											"path": "$['body']"
-										},
-										"sink": {
-											"name": "body",
-											"type": "String"
-										}
-									}
-								]
-							}
-						},
-						"inputs": [
-							{
-								"referenceName": "DS_ABLB_APIUserDetails",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						],
-						"outputs": [
-							{
-								"referenceName": "DS_SQL_APIUserDetails",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						]
-					},
-					{
-						"name": "Delete existing data in target table",
-						"type": "Lookup",
-						"dependsOn": [
-							{
-								"activity": "REST API to Blob Storage",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": "Truncate table dbo.adf_UserDetails;\nSelect 0 as Id;",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "DS_SQL_APIUserDetails",
-								"type": "DatasetReference",
-								"parameters": {}
-							}
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"variables": {
-					"OutputFileName": {
-						"type": "String"
-					},
-					"var_catBreedsJsonId": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "ADF Pipeline/200_PL_API_Load"
-				},
-				"annotations": [],
-				"lastPublishTime": "2022-06-27T07:58:34Z"
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/datasets/DS_REST_APIUserDetails')]",
-				"[concat(variables('factoryId'), '/datasets/DS_ABLB_APIUserDetails')]",
-				"[concat(variables('factoryId'), '/datasets/DS_SQL_APIUserDetails')]"
 			]
 		}
 	]
