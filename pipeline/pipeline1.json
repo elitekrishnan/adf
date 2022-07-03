@@ -1,0 +1,63 @@
+{
+	"name": "pipeline1",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Token from Web",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "http://restapi.adequateshop.com/api/authaccount/login",
+					"method": "POST",
+					"body": {
+						"email": "krishnanssampleapi@gmail.com",
+						"password": "123456"
+					}
+				}
+			},
+			{
+				"name": "Token from JSON Output",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Token from Web",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "VAR_Token",
+					"value": {
+						"value": "@{activity('Get Token').output.data.Token}",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"VAR_UserRegistration_Output": {
+				"type": "String"
+			},
+			"VAR_GeToken_Output": {
+				"type": "String"
+			},
+			"VAR_Token": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "ADF Pipeline/200_PL_API_Load"
+		},
+		"annotations": []
+	}
+}
