@@ -18,8 +18,8 @@
 					"url": "http://restapi.adequateshop.com/api/authaccount/login",
 					"method": "POST",
 					"body": {
-						"email": "krishnanssampleapi@gmail.com",
-						"password": "123456"
+						"value": "@concat('{\"email\":\"',pipeline().parameters.PRM_email,'\",\"password\":\"',pipeline().parameters.PRM_password,'\"}')",
+						"type": "Expression"
 					}
 				}
 			},
@@ -91,7 +91,8 @@
 						"value": "@activity('Get All User with Token').output.data",
 						"type": "Expression"
 					},
-					"isSequential": true,
+					"isSequential": false,
+					"batchCount": 10,
 					"activities": [
 						{
 							"name": "Get Each Rows Value",
@@ -150,14 +151,18 @@
 				}
 			}
 		],
+		"parameters": {
+			"PRM_email": {
+				"type": "string",
+				"defaultValue": "krishnanssampleapi@gmail.com"
+			},
+			"PRM_password": {
+				"type": "string",
+				"defaultValue": "123456"
+			}
+		},
 		"variables": {
 			"VAR_Token": {
-				"type": "String"
-			},
-			"VAR_email": {
-				"type": "String"
-			},
-			"VAR_password": {
 				"type": "String"
 			},
 			"VAR_UserData": {
