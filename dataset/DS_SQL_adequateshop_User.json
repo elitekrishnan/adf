@@ -1,0 +1,54 @@
+{
+	"name": "DS_SQL_adequateshop_User",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_SQL_ADFCustomer",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "pageId",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "userId",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "email",
+				"type": "nchar"
+			},
+			{
+				"name": "profilepicture",
+				"type": "nchar"
+			},
+			{
+				"name": "location",
+				"type": "nchar"
+			},
+			{
+				"name": "createdat",
+				"type": "datetime",
+				"precision": 23,
+				"scale": 3
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "adequateshop_User"
+		}
+	}
+}

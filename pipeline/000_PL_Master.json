@@ -76,6 +76,11 @@
 				}
 			}
 		],
+		"variables": {
+			"VAR_UserData": {
+				"type": "String"
+			}
+		},
 		"folder": {
 			"name": "ADF Pipeline"
 		},

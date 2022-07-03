@@ -1,5 +1,5 @@
 {
-	"name": "pipeline1",
+	"name": "203_PL_adequateshop_DataLoad",
 	"properties": {
 		"activities": [
 			{
@@ -38,20 +38,129 @@
 				"typeProperties": {
 					"variableName": "VAR_Token",
 					"value": {
-						"value": "@{activity('Get Token').output.data.Token}",
+						"value": "@{activity('Get Token from Web').output.data.Token}",
 						"type": "Expression"
 					}
+				}
+			},
+			{
+				"name": "Get All User with Token",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Token from JSON Output",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": "http://restapi.adequateshop.com/api/users?page=1",
+					"method": "GET",
+					"headers": {
+						"Authorization": {
+							"value": "@{concat('Bearer ',variables('VAR_Token'))}",
+							"type": "Expression"
+						}
+					},
+					"body": ""
+				}
+			},
+			{
+				"name": "ForEach User Data",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get All User with Token",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get All User with Token').output.data",
+						"type": "Expression"
+					},
+					"isSequential": true,
+					"activities": [
+						{
+							"name": "Get Each Rows Value",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "VAR_UserData",
+								"value": {
+									"value": "@{item()}",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Save value to Table",
+							"type": "SqlServerStoredProcedure",
+							"dependsOn": [
+								{
+									"activity": "Get Each Rows Value",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"storedProcedureName": "[dbo].[sp_adequateshop_UserInsert]",
+								"storedProcedureParameters": {
+									"JsonData": {
+										"value": {
+											"value": "@{variables('VAR_UserData')}",
+											"type": "Expression"
+										},
+										"type": "String"
+									},
+									"pageId": {
+										"value": "1",
+										"type": "Int64"
+									}
+								}
+							},
+							"linkedServiceName": {
+								"referenceName": "LS_SQL_ADFCustomer",
+								"type": "LinkedServiceReference"
+							}
+						}
+					]
 				}
 			}
 		],
 		"variables": {
-			"VAR_UserRegistration_Output": {
-				"type": "String"
-			},
-			"VAR_GeToken_Output": {
-				"type": "String"
-			},
 			"VAR_Token": {
+				"type": "String"
+			},
+			"VAR_email": {
+				"type": "String"
+			},
+			"VAR_password": {
+				"type": "String"
+			},
+			"VAR_UserData": {
 				"type": "String"
 			}
 		},
