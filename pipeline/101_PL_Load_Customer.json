@@ -137,7 +137,7 @@
 						"referenceName": "DS_SQL_Customer",
 						"type": "DatasetReference",
 						"parameters": {
-							"PARM_Customer_TableName": {
+							"PARM_DS_Customer_TableName": {
 								"value": "@pipeline().parameters.PARM_PL_Customer_TableName",
 								"type": "Expression"
 							}

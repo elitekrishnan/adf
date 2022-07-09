@@ -7,7 +7,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"parameters": {
-			"PARM_Customer_TableName": {
+			"PARM_DS_Customer_TableName": {
 				"type": "string",
 				"defaultValue": "adf_Customer"
 			}
@@ -21,7 +21,7 @@
 		"typeProperties": {
 			"schema": "dbo",
 			"table": {
-				"value": "@dataset().PARM_Customer_TableName",
+				"value": "@dataset().PARM_DS_Customer_TableName",
 				"type": "Expression"
 			}
 		}

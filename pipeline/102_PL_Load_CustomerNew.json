@@ -124,11 +124,22 @@
 				"outputs": [
 					{
 						"referenceName": "DS_SQL_CustomerNew",
-						"type": "DatasetReference"
+						"type": "DatasetReference",
+						"parameters": {
+							"PARM_DS_Customer_TableName": {
+								"value": "@pipeline().parameters.PARM_PL_Customer_TableName",
+								"type": "Expression"
+							}
+						}
 					}
 				]
 			}
 		],
+		"parameters": {
+			"PARM_PL_Customer_TableName": {
+				"type": "string"
+			}
+		},
 		"folder": {
 			"name": "ADF Pipeline/100_PL_Customer"
 		},
