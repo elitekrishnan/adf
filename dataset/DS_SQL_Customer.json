@@ -6,6 +6,12 @@
 			"referenceName": "LS_SQL_ADFCustomer",
 			"type": "LinkedServiceReference"
 		},
+		"parameters": {
+			"PARM_Customer_TableName": {
+				"type": "string",
+				"defaultValue": "adf_Customer"
+			}
+		},
 		"folder": {
 			"name": "Customer"
 		},
@@ -14,7 +20,10 @@
 		"schema": [],
 		"typeProperties": {
 			"schema": "dbo",
-			"table": "adf_customer"
+			"table": {
+				"value": "@dataset().PARM_Customer_TableName",
+				"type": "Expression"
+			}
 		}
 	},
 	"type": "Microsoft.DataFactory/factories/datasets"
