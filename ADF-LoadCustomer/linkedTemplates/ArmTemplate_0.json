@@ -85,6 +85,193 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('factoryName'), '/203_PL_adequateshop_DataLoad')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Token from Web",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "http://restapi.adequateshop.com/api/authaccount/login",
+							"method": "POST",
+							"headers": {},
+							"body": {
+								"value": "@concat('{\"email\":\"',pipeline().parameters.PRM_email,'\",\"password\":\"',pipeline().parameters.PRM_password,'\"}')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Token from JSON Output",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get Token from Web",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "VAR_Token",
+							"value": {
+								"value": "@{activity('Get Token from Web').output.data.Token}",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Get All User with Token",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Token from JSON Output",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": "http://restapi.adequateshop.com/api/users?page=1",
+							"method": "GET",
+							"headers": {
+								"Authorization": {
+									"value": "@{concat('Bearer ',variables('VAR_Token'))}",
+									"type": "Expression"
+								}
+							},
+							"body": ""
+						}
+					},
+					{
+						"name": "ForEach User Data",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get All User with Token",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get All User with Token').output.data",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 10,
+							"activities": [
+								{
+									"name": "Get Each Rows Value",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "VAR_UserData",
+										"value": {
+											"value": "@{item()}",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Save value to Table",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [
+										{
+											"activity": "Get Each Rows Value",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "7.00:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": "[[dbo].[sp_adequateshop_UserInsert]",
+										"storedProcedureParameters": {
+											"JsonData": {
+												"value": {
+													"value": "@{variables('VAR_UserData')}",
+													"type": "Expression"
+												},
+												"type": "String"
+											},
+											"pageId": {
+												"value": "1",
+												"type": "Int64"
+											}
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "LS_SQL_ADFCustomer",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"parameters": {
+					"PRM_email": {
+						"type": "string",
+						"defaultValue": "krishnanssampleapi@gmail.com"
+					},
+					"PRM_password": {
+						"type": "string",
+						"defaultValue": "123456"
+					}
+				},
+				"variables": {
+					"VAR_Token": {
+						"type": "String"
+					},
+					"VAR_UserData": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "ADF Pipeline/200_PL_API_Load"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('factoryName'), '/DS_ABLB_APIUserDetails')]",
 			"type": "Microsoft.DataFactory/factories/datasets",
 			"apiVersion": "2018-06-01",
@@ -412,6 +599,12 @@
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
 				},
+				"parameters": {
+					"PARM_DS_Customer_TableName": {
+						"type": "string",
+						"defaultValue": "adf_Customer"
+					}
+				},
 				"folder": {
 					"name": "Customer"
 				},
@@ -420,7 +613,10 @@
 				"schema": [],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "adf_customer"
+					"table": {
+						"value": "@dataset().PARM_DS_Customer_TableName",
+						"type": "Expression"
+					}
 				}
 			},
 			"dependsOn": [
@@ -435,6 +631,11 @@
 				"linkedServiceName": {
 					"referenceName": "LS_SQL_ADFCustomer",
 					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"PARM_DS_Customer_TableName": {
+						"type": "string"
+					}
 				},
 				"folder": {
 					"name": "Customer"
@@ -470,7 +671,72 @@
 				],
 				"typeProperties": {
 					"schema": "dbo",
-					"table": "adf_customerNew"
+					"table": {
+						"value": "@dataset().PARM_DS_Customer_TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DS_SQL_adequateshop_User')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "adequateshop"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "pageId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "userId",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "email",
+						"type": "nchar"
+					},
+					{
+						"name": "profilepicture",
+						"type": "nchar"
+					},
+					{
+						"name": "location",
+						"type": "nchar"
+					},
+					{
+						"name": "createdat",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "adequateshop_User"
 				}
 			},
 			"dependsOn": [
@@ -562,255 +828,6 @@
 			]
 		},
 		{
-			"name": "[concat(parameters('factoryName'), '/203_PL_adequateshop_DataLoad')]",
-			"type": "Microsoft.DataFactory/factories/pipelines",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"activities": [
-					{
-						"name": "Get Token from Web",
-						"type": "WebActivity",
-						"dependsOn": [],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"url": "http://restapi.adequateshop.com/api/authaccount/login",
-							"method": "POST",
-							"headers": {},
-							"body": {
-								"value": "@concat('{\"email\":\"',pipeline().parameters.PRM_email,'\",\"password\":\"',pipeline().parameters.PRM_password,'\"}')",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Token from JSON Output",
-						"type": "SetVariable",
-						"dependsOn": [
-							{
-								"activity": "Get Token from Web",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"variableName": "VAR_Token",
-							"value": {
-								"value": "@{activity('Get Token from Web').output.data.Token}",
-								"type": "Expression"
-							}
-						}
-					},
-					{
-						"name": "Get All User with Token",
-						"type": "WebActivity",
-						"dependsOn": [
-							{
-								"activity": "Token from JSON Output",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"policy": {
-							"timeout": "7.00:00:00",
-							"retry": 0,
-							"retryIntervalInSeconds": 30,
-							"secureOutput": false,
-							"secureInput": false
-						},
-						"userProperties": [],
-						"typeProperties": {
-							"url": "http://restapi.adequateshop.com/api/users?page=1",
-							"method": "GET",
-							"headers": {
-								"Authorization": {
-									"value": "@{concat('Bearer ',variables('VAR_Token'))}",
-									"type": "Expression"
-								}
-							},
-							"body": ""
-						}
-					},
-					{
-						"name": "ForEach User Data",
-						"type": "ForEach",
-						"dependsOn": [
-							{
-								"activity": "Get All User with Token",
-								"dependencyConditions": [
-									"Succeeded"
-								]
-							}
-						],
-						"userProperties": [],
-						"typeProperties": {
-							"items": {
-								"value": "@activity('Get All User with Token').output.data",
-								"type": "Expression"
-							},
-							"isSequential": false,
-							"batchCount": 10,
-							"activities": [
-								{
-									"name": "Get Each Rows Value",
-									"type": "SetVariable",
-									"dependsOn": [],
-									"userProperties": [],
-									"typeProperties": {
-										"variableName": "VAR_UserData",
-										"value": {
-											"value": "@{item()}",
-											"type": "Expression"
-										}
-									}
-								},
-								{
-									"name": "Save value to Table",
-									"type": "SqlServerStoredProcedure",
-									"dependsOn": [
-										{
-											"activity": "Get Each Rows Value",
-											"dependencyConditions": [
-												"Succeeded"
-											]
-										}
-									],
-									"policy": {
-										"timeout": "7.00:00:00",
-										"retry": 0,
-										"retryIntervalInSeconds": 30,
-										"secureOutput": false,
-										"secureInput": false
-									},
-									"userProperties": [],
-									"typeProperties": {
-										"storedProcedureName": "[[dbo].[sp_adequateshop_UserInsert]",
-										"storedProcedureParameters": {
-											"JsonData": {
-												"value": {
-													"value": "@{variables('VAR_UserData')}",
-													"type": "Expression"
-												},
-												"type": "String"
-											},
-											"pageId": {
-												"value": "1",
-												"type": "Int64"
-											}
-										}
-									},
-									"linkedServiceName": {
-										"referenceName": "LS_SQL_ADFCustomer",
-										"type": "LinkedServiceReference"
-									}
-								}
-							]
-						}
-					}
-				],
-				"policy": {
-					"elapsedTimeMetric": {},
-					"cancelAfter": {}
-				},
-				"parameters": {
-					"PRM_email": {
-						"type": "string",
-						"defaultValue": "krishnanssampleapi@gmail.com"
-					},
-					"PRM_password": {
-						"type": "string",
-						"defaultValue": "123456"
-					}
-				},
-				"variables": {
-					"VAR_Token": {
-						"type": "String"
-					},
-					"VAR_UserData": {
-						"type": "String"
-					}
-				},
-				"folder": {
-					"name": "ADF Pipeline/200_PL_API_Load"
-				},
-				"annotations": []
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
-			]
-		},
-		{
-			"name": "[concat(parameters('factoryName'), '/DS_SQL_adequateshop_User')]",
-			"type": "Microsoft.DataFactory/factories/datasets",
-			"apiVersion": "2018-06-01",
-			"properties": {
-				"linkedServiceName": {
-					"referenceName": "LS_SQL_ADFCustomer",
-					"type": "LinkedServiceReference"
-				},
-				"folder": {
-					"name": "adequateshop"
-				},
-				"annotations": [],
-				"type": "AzureSqlTable",
-				"schema": [
-					{
-						"name": "id",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "pageId",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "userId",
-						"type": "bigint",
-						"precision": 19
-					},
-					{
-						"name": "name",
-						"type": "nvarchar"
-					},
-					{
-						"name": "email",
-						"type": "nchar"
-					},
-					{
-						"name": "profilepicture",
-						"type": "nchar"
-					},
-					{
-						"name": "location",
-						"type": "nchar"
-					},
-					{
-						"name": "createdat",
-						"type": "datetime",
-						"precision": 23,
-						"scale": 3
-					}
-				],
-				"typeProperties": {
-					"schema": "dbo",
-					"table": "adequateshop_User"
-				}
-			},
-			"dependsOn": [
-				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
-			]
-		},
-		{
 			"name": "[concat(parameters('factoryName'), '/101_PL_Load_Customer')]",
 			"type": "Microsoft.DataFactory/factories/pipelines",
 			"apiVersion": "2018-06-01",
@@ -818,11 +835,12 @@
 				"description": "Pipeline to Load Customer information from Blob storage ",
 				"activities": [
 					{
-						"name": "Load Customer from CSV file",
+						"name": "Load Customers",
+						"description": "Load Customers from CSV file in to SQL Database",
 						"type": "Copy",
 						"dependsOn": [
 							{
-								"activity": "Truncate Traget Table",
+								"activity": "Truncate Taerget Table",
 								"dependencyConditions": [
 									"Succeeded"
 								]
@@ -851,7 +869,8 @@
 							"sink": {
 								"type": "AzureSqlSink",
 								"writeBehavior": "insert",
-								"sqlWriterUseTableLock": false
+								"sqlWriterUseTableLock": true,
+								"disableMetricsCollection": false
 							},
 							"enableStaging": false,
 							"translator": {
@@ -949,13 +968,18 @@
 							{
 								"referenceName": "DS_SQL_Customer",
 								"type": "DatasetReference",
-								"parameters": {}
+								"parameters": {
+									"PARM_DS_Customer_TableName": {
+										"value": "@pipeline().parameters.PARM_PL_Customer_TableName",
+										"type": "Expression"
+									}
+								}
 							}
 						]
 					},
 					{
-						"name": "Truncate Traget Table",
-						"type": "Lookup",
+						"name": "Truncate Taerget Table",
+						"type": "Script",
 						"dependsOn": [],
 						"policy": {
 							"timeout": "7.00:00:00",
@@ -965,17 +989,19 @@
 							"secureInput": false
 						},
 						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "LS_SQL_ADFCustomer",
+							"type": "LinkedServiceReference"
+						},
 						"typeProperties": {
-							"source": {
-								"type": "AzureSqlSource",
-								"sqlReaderQuery": "Truncate Table dbo.adf_Customer;\nSelect 0 as Id;",
-								"queryTimeout": "02:00:00",
-								"partitionOption": "None"
-							},
-							"dataset": {
-								"referenceName": "DS_SQL_Customer",
-								"type": "DatasetReference",
-								"parameters": {}
+							"scripts": [
+								{
+									"type": "NonQuery",
+									"text": "Truncate Table dbo.adf_Customer;"
+								}
+							],
+							"logSettings": {
+								"logDestination": "ActivityOutput"
 							}
 						}
 					}
@@ -984,15 +1010,24 @@
 					"elapsedTimeMetric": {},
 					"cancelAfter": {}
 				},
+				"parameters": {
+					"PARM_PL_Customer_TableName": {
+						"type": "string",
+						"defaultValue": "adf_customer"
+					}
+				},
 				"folder": {
 					"name": "ADF Pipeline/100_PL_Customer"
 				},
-				"annotations": [],
+				"annotations": [
+					"Navaneethakrishnan Thangaraj"
+				],
 				"lastPublishTime": "2022-06-27T03:22:36Z"
 			},
 			"dependsOn": [
 				"[concat(variables('factoryId'), '/datasets/DS_ABLB_CustomerCSV')]",
-				"[concat(variables('factoryId'), '/datasets/DS_SQL_Customer')]"
+				"[concat(variables('factoryId'), '/datasets/DS_SQL_Customer')]",
+				"[concat(variables('factoryId'), '/linkedServices/LS_SQL_ADFCustomer')]"
 			]
 		}
 	]
