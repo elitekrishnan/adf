@@ -4,11 +4,12 @@
 		"description": "Pipeline to Load Customer information from Blob storage ",
 		"activities": [
 			{
-				"name": "Load Customer from CSV file",
+				"name": "Load Customers",
+				"description": "Load Customers from CSV file in to SQL Database",
 				"type": "Copy",
 				"dependsOn": [
 					{
-						"activity": "Truncate Traget Table",
+						"activity": "Truncate Taerget Table",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -37,7 +38,8 @@
 					"sink": {
 						"type": "AzureSqlSink",
 						"writeBehavior": "insert",
-						"sqlWriterUseTableLock": false
+						"sqlWriterUseTableLock": true,
+						"disableMetricsCollection": false
 					},
 					"enableStaging": false,
 					"translator": {
@@ -138,8 +140,8 @@
 				]
 			},
 			{
-				"name": "Truncate Traget Table",
-				"type": "Lookup",
+				"name": "Truncate Taerget Table",
+				"type": "Script",
 				"dependsOn": [],
 				"policy": {
 					"timeout": "7.00:00:00",
@@ -149,16 +151,19 @@
 					"secureInput": false
 				},
 				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "LS_SQL_ADFCustomer",
+					"type": "LinkedServiceReference"
+				},
 				"typeProperties": {
-					"source": {
-						"type": "AzureSqlSource",
-						"sqlReaderQuery": "Truncate Table dbo.adf_Customer;\nSelect 0 as Id;",
-						"queryTimeout": "02:00:00",
-						"partitionOption": "None"
-					},
-					"dataset": {
-						"referenceName": "DS_SQL_Customer",
-						"type": "DatasetReference"
+					"scripts": [
+						{
+							"type": "NonQuery",
+							"text": "Truncate Table dbo.adf_Customer;"
+						}
+					],
+					"logSettings": {
+						"logDestination": "ActivityOutput"
 					}
 				}
 			}
@@ -166,7 +171,9 @@
 		"folder": {
 			"name": "ADF Pipeline/100_PL_Customer"
 		},
-		"annotations": [],
+		"annotations": [
+			"Navaneethakrishnan Thangaraj"
+		],
 		"lastPublishTime": "2022-06-27T03:22:36Z"
 	},
 	"type": "Microsoft.DataFactory/factories/pipelines"
